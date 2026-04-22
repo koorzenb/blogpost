@@ -1,7 +1,9 @@
 {% include "header.html" %}
 
 <!-- Page Header-->
-<header class="masthead" style="background-image: url('{{post.img_url}}')">
+<header
+  class="masthead"
+  style="background-image: url('{{post.img_url}}')">
   <div class="container position-relative px-4 px-lg-5">
     <div class="row gx-4 gx-lg-5 justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
@@ -34,24 +36,42 @@
             >Edit Post</a
           >
         </div>
-        {% endif %}
-
-        <!--           Comments Area -->
-        <div class="col-lg-8 col-md-10 mx-auto comment">
+        {% endif %} 
+       <!-- Load the CKEditor -->
+        {{ ckeditor.load() }}
+        <!-- Configure it with the name of the form field from CommentForm -->
+        {{ ckeditor.config(name='comment_text') }}
+        <!-- Create the comment form -->
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            {{ form.comment_text(class="form-control") }}
+          </div>
+          {{ form.submit(class="btn btn-primary") }}
+        </form>
+        <div class="comment">
           <ul class="commentList">
+            <!-- Show all comments -->
+            {% for comment in post.comments: %}
             <li>
               <div class="commenterImage">
                 <img
-                  src="../static/assets/img/default-profile.jpg"
+                  src="{{ comment.comment_author.email | gravatar }}"
                 />
               </div>
               <div class="commentText">
-                <p>Some comment</p>
-                <span class="date sub-text">comment author name</span>
+                {{comment.text|safe}}
+                <span class="sub-text">{{comment.comment_author.name}}</span>
               </div>
             </li>
+            {% endfor %}
           </ul>
+
         </div>
+      </div>
+    </div>
+  </div>
+</article>
       </div>
     </div>
   </div>
