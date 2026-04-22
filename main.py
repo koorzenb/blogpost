@@ -48,14 +48,20 @@ db.init_app(app)
 
 
 # CONFIGURE TABLES
-class BlogPost(UserMixin, db.Model):
+class BlogPost(db.Model):
     __tablename__ = "blog_posts"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+        
+ 
+    
     title: Mapped[str] = mapped_column(String(250), unique=True, nullable=False)
     subtitle: Mapped[str] = mapped_column(String(250), nullable=False)
     date: Mapped[str] = mapped_column(String(250), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
-    author: Mapped[str] = mapped_column(String(250), nullable=False)
+    # Create reference to the User object. The "posts" refers to the posts property in the User class.
+    author = relationship("User", back_populates="posts")
+       # Create Foreign Key, "users.id" the users refers to the tablename of User.
+    author_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("users.id"))
     img_url: Mapped[str] = mapped_column(String(250), nullable=False)
     
     def __init__(self, title, subtitle, date, body, author, img_url):
@@ -72,11 +78,10 @@ class User(UserMixin, db.Model):
     email: Mapped[str] = mapped_column(String(100), unique=True)
     password: Mapped[str] = mapped_column(String(100))
     name: Mapped[str] = mapped_column(String(100))
-    
-    def __init__(self, email, password, name):
-        self.email = email
-        self.password = password
-        self.name = name
+        
+    #This will act like a List of BlogPost objects attached to each User. 
+    #The "author" refers to the author property in the BlogPost class.
+    posts = relationship("BlogPost", back_populates="author")
 
 with app.app_context():
     db.create_all()
