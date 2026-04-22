@@ -10,9 +10,8 @@ from sqlalchemy import Integer, String, Text
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 # Import your forms from the forms.py
-from forms import CreatePostForm, RegisterForm
+from forms import CreatePostForm, RegisterForm, LoginForm
 import os
-
 
 '''
 Make sure the required packages are installed: 
@@ -32,13 +31,16 @@ app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
 ckeditor = CKEditor(app)
 Bootstrap5(app)
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+
 # TODO: Configure Flask-Login
 
 
 # CREATE DATABASE
 class Base(DeclarativeBase):
     pass
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DB_URI', 'sqlite:///blog.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
@@ -77,13 +79,23 @@ class User(UserMixin, db.Model):
 with app.app_context():
     db.create_all()
 
+@login_manager.user_loader
+def load_user(user_id):
+    return db.get_or_404(User, user_id)
 
-# TODO: Use Werkzeug to hash the user's password when creating a new user.
 @app.route('/register', methods=["GET", "POST"])
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
         assert form.password.data is not None
+        
+        # Check if user email already exists
+        result = db.session.execute(db.select(User).where(User.email == form.email.data))
+        user = result.scalar()
+        if user:
+            # User already exists
+            flash("You've already signed up with that email, log in instead!")
+            return redirect(url_for('login'))
         
         hash_and_salted_password = generate_password_hash(
             form.password.data,
@@ -97,18 +109,42 @@ def register():
         )
         db.session.add(new_user)
         db.session.commit()
+        
+        # Log in the user after registration
+        login_user(new_user)
+        
         return redirect(url_for("get_all_posts"))
     return render_template("register.html", form=form)
 
 
-# TODO: Retrieve a user from the database based on their email. 
-@app.route('/login')
+@app.route('/login', methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    form = LoginForm()
+    if form.validate_on_submit():
+        assert form.password.data is not None
+        
+        password = form.password.data
+        result = db.session.execute(db.select(User).where(User.email == form.email.data))
+        # Note, email in db is unique so will only have one result.
+        user = result.scalar()
+        # Email doesn't exist
+        if not user:
+            flash("That email does not exist, please try again.")
+            return redirect(url_for('login'))
+        # Password incorrect
+        elif not check_password_hash(user.password, password):
+            flash('Password incorrect, please try again.')
+            return redirect(url_for('login'))
+        else:
+            login_user(user)
+            return redirect(url_for('get_all_posts'))
+
+    return render_template("login.html", form=form)
 
 
 @app.route('/logout')
 def logout():
+    logout_user()
     return redirect(url_for('get_all_posts'))
 
 
