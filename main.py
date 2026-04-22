@@ -12,9 +12,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # Import your forms from the forms.py
 from forms import CreatePostForm, RegisterForm, LoginForm
 from functools import wraps
-from flask import 
+from flask import abort
 import os
-
 
 '''
 Make sure the required packages are installed: 
