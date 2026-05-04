@@ -1,6 +1,6 @@
 # About
 
-Website for  posting 
+Website for  posting blogs. Built with Flask and SQLite.
 
 First user to register will be admin. Subsequent users will be regular users.
 

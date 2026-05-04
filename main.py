@@ -14,8 +14,11 @@ from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 from functools import wraps
 import os
 from dotenv import load_dotenv
+from db_config import get_database_uri
+
 # Load environment variables from .env file
 load_dotenv()
+load_dotenv('.env.local')  # Load Vercel environment variables
 
 
 '''
@@ -52,7 +55,8 @@ gravatar = Gravatar(app,
 class Base(DeclarativeBase):
     pass
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
+# Use the database URI from db_config (handles IAM auth for Aurora PostgreSQL)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI") or get_database_uri()
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 

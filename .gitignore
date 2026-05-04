@@ -1,3 +1,12 @@
 .DS_Store
 .env
 instance/posts.db
+.vercel
+.env*.local
+__pycache__/
+*.pyc
+*.pyo
+node_modules/
+package-lock.json
+venv/
+.venv/
